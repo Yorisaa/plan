@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Мой план тренировок</title>
+<style>
+:root {
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --muted: #888;
+  --border: #e0ddd8;
+  --p1: #1a5c3a; --p1l: #eaf4ee;
+  --p2: #1a4a7a; --p2l: #e8f0f8;
+  --p3: #7a3a00; --p3l: #f8f0e8;
+  --p4: #5a2d82; --p4l: #f0ebf8;
+  --knee: #1a5c3a;
+  --body: #1a4a7a;
+  --stretch: #7a3a00;
+  --rest: #888;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* HEADER */
+.app-header {
+  background: var(--text);
+  color: #fff;
+  padding: 18px 16px 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+.app-header h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.app-header .today-pill {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  margin-top: 3px;
+  letter-spacing: 0.05em;
+}
+
+/* SELECTORS */
+.selectors {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+}
+.sel-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.chip-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.chip-row:last-child { margin-bottom: 0; }
+.chip {
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.chip.active {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+
+/* DAY TABS */
+.day-tabs {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--card);
+  border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 65px;
+  z-index: 90;
+}
+.day-tab {
+  padding: 10px 4px 8px;
+  text-align: center;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  transition: all 0.15s;
+}
+.day-tab:last-child { border-right: none; }
+.day-tab .dname {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.day-tab .dtype {
+  font-size: 0.6rem;
+  margin-top: 2px;
+  color: var(--muted);
+}
+.day-tab.active { background: var(--text); }
+.day-tab.active .dname, .day-tab.active .dtype { color: #fff; }
+.day-tab.today .dname { color: var(--p1); }
+
+/* CONTENT */
+.content { padding: 14px 12px; }
+
+/* TIMING BAR */
+.timing-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.time-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.time-badge.total { background: var(--text); color: #fff; }
+.time-badge.knee  { background: var(--p1l); color: var(--knee); }
+.time-badge.body  { background: var(--p2l); color: var(--body); }
+.time-badge.str   { background: var(--p3l); color: var(--stretch); }
+
+/* SECTION */
+.section {
+  margin-bottom: 14px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 8px 8px 0 0;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.section-header.knee  { background: var(--p1l); color: var(--knee); }
+.section-header.body  { background: var(--p2l); color: var(--body); }
+.section-header.str   { background: var(--p3l); color: var(--stretch); }
+.section-header .rest-info {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* EXERCISE CARDS */
+.ex-list {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+.ex-item {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.ex-item:last-child { border-bottom: none; }
+.ex-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 20px;
+  padding-top: 1px;
+}
+.ex-info { flex: 1; }
+.ex-name { font-weight: 700; font-size: 0.88rem; margin-bottom: 2px; }
+.ex-desc { font-size: 0.75rem; color: #666; line-height: 1.4; margin-bottom: 5px; }
+.ex-sets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.set-tag {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* REST DAY */
+.rest-day {
+  text-align: center;
+  padding: 50px 20px;
+}
+.rest-icon { font-size: 3rem; margin-bottom: 12px; }
+.rest-day h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+.rest-day p { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+
+/* RULE BOX */
+.rules-box {
+  background: #fffbe6;
+  border: 1px solid #e8d800;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 0.78rem;
+  color: #5a4a00;
+  line-height: 1.6;
+}
+.rules-box strong { display: block; font-weight: 700; margin-bottom: 5px; font-size: 0.8rem; }
+
+/* PHASE NOTICE */
+.phase-notice {
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ===================== DATA =====================
+
+const STRETCH = [
+  { name: "«Четвёрка» на бедро",
+    desc: "Лёжа на спине. Правую ногу закинуть на левое колено, обхватить руками левое бедро и потянуть к груди. Мягко, без боли. Потом другая сторона.",
+    hold: "30 сек × 2 стороны" },
+  { name: "Кошка-корова",
+    desc: "На четвереньках. На вдохе — прогиб в пояснице, голова вверх. На выдохе — округлить спину, голова вниз. Очень медленно.",
+    hold: "10 повторений" },
+  { name: "Скрутка лёжа",
+    desc: "Лёжа на спине. Одно колено к груди и плавно опустить в сторону, вторая рука — в противоположную. Дышать ровно. Потом другая сторона.",
+    hold: "15 сек × 2 стороны" }
+];
+
+const PHASES = [
+  {
+    id: 1, name: "БАЗА", weeks: "Нед. 1–12",
+    color: "var(--p1)", light: "var(--p1l)",
+    notice: "Все упражнения лёжа или у стены. Если после занятия колено опухло — следующий день отдых.",
+    weekGroups: [
+      {
+        label: "Нед. 1–2", kneeMin: 15, bodyMin: 20,
+        knee: [
+          { name: "Изометрия квадрицепса", desc: "Лёжа на спине, нога прямая на полу. Вдавить колено вниз — держать — отпустить. Поочерёдно обе ноги.", sets:"3", reps:"10", hold:"10 сек", rest:"45 сек" },
+          { name: "Подъём прямой ноги (SLR)", desc: "Одна нога согнута стопой в пол, другая прямая. Поднять 45° — держать — медленно опустить. Обе ноги.", sets:"3", reps:"10", hold:"5 сек", rest:"45 сек" },
+          { name: "Сжатие подушки", desc: "Лёжа, колени согнуты, небольшая подушка между колен. Сжать с усилием — держать — расслабить.", sets:"3", reps:"10", hold:"10 сек", rest:"45 сек" },
+          { name: "Ягодичный мост", desc: "Лёжа на спине, стопы на полу на ширине плеч. Поднять таз вверх — держать — медленно опустить.", sets:"3", reps:"10", hold:"10 сек", rest:"45 сек" }
+        ],
+        body: [
+          { name: "Отжимания с колен", desc: "Колени на коврике, тело прямое от колен до головы. Медленно опустить грудь до пола — отжаться.", sets:"3", reps:"8", rest:"60 сек" },
+          { name: "Широкие отжимания с колен", desc: "Как предыдущее, но руки на 15 см шире плеч. Акцент на грудь.", sets:"3", reps:"8", rest:"60 сек" },
+          { name: "Супермен", desc: "Лёжа на животе, руки вытянуты вперёд. Одновременно поднять руки и ноги — задержать — медленно опустить.", sets:"3", reps:"10", hold:"3 сек", rest:"45 сек" },
+          { name: "Мёртвый жук", desc: "Лёжа на спине, руки вверх, колени согнуты 90°. Противоположная рука и нога медленно тянутся горизонтально — возврат. Поясница прижата к полу!", sets:"3", reps:"8", rest:"45 сек" },
+          { name: "Планка на локтях", desc: "На локтях и носках. Тело прямое как доска — не поднимать и не опускать таз.", sets:"3", hold:"20 сек", rest:"45 сек" }
+        ]
+      },
+      {
+        label: "Нед. 3–4", kneeMin: 18, bodyMin: 22,
+        knee: [
+          { name: "Изометрия квадрицепса", desc: "Лёжа, вдавить колено в пол — держать.", sets:"3", reps:"12", hold:"10 сек", rest:"45 сек" },
+          { name: "Подъём прямой ноги (SLR)", desc: "Обе ноги поочерёдно.", sets:"3", reps:"12", hold:"5 сек", rest:"45 сек" },
+          { name: "Сжатие подушки", desc: "Подушка между колен — сжать с усилием.", sets:"3", reps:"12", hold:"10 сек", rest:"45 сек" },
+          { name: "Ягодичный мост", desc: "Поднять таз — держать.", sets:"3", reps:"12", hold:"10 сек", rest:"45 сек" },
+          { name: "Отведение ноги лёжа", desc: "Лёжа на боку, поднять прямую ногу на 40° — держать — опустить. Обе стороны.", sets:"3", reps:"10", hold:"3 сек", rest:"45 сек" }
+        ],
+        body: [
+          { name: "Отжимания с колен", desc: "Уже легче? Попробуй 1–2 обычных в конце подхода.", sets:"3", reps:"10", rest:"60 сек" },
+          { name: "Широкие отжимания с колен", desc: "Руки шире плеч.", sets:"3", reps:"10", rest:"60 сек" },
+          { name: "Супермен", desc: "Лёжа на животе, поднять всё вместе, пауза наверху.", sets:"3", reps:"12", hold:"3 сек", rest:"45 сек" },
+          { name: "Мёртвый жук", desc: "Противоположная рука-нога горизонтально. Поясница не отрывается!", sets:"3", reps:"10", rest:"45 сек" },
+          { name: "Планка на локтях", desc: "Тело прямое, дышать ровно.", sets:"3", hold:"25 сек", rest:"45 сек" }
+        ]
+      },
+      {
+        label: "Нед. 5–8", kneeMin: 22, bodyMin: 25,
+        knee: [
+          { name: "Изометрия квадрицепса", desc: "Лёжа, максимальное усилие.", sets:"4", reps:"15", hold:"10 сек", rest:"45 сек" },
+          { name: "Подъём прямой ноги (SLR)", desc: "Обе ноги.", sets:"4", reps:"15", hold:"5 сек", rest:"45 сек" },
+          { name: "Сжатие подушки", desc: "Сильное сжатие.", sets:"4", reps:"15", hold:"10 сек", rest:"45 сек" },
+          { name: "Ягодичный мост", desc: "4 подхода, уверенно.", sets:"4", reps:"15", hold:"10 сек", rest:"45 сек" },
+          { name: "Отведение ноги лёжа", desc: "На боку, держать дольше.", sets:"3", reps:"15", hold:"5 сек", rest:"45 сек" }
+        ],
+        body: [
+          { name: "Обычные отжимания", desc: "Уже без колен! Если тяжело — несколько с колен в конце подхода.", sets:"3", reps:"10", rest:"60 сек" },
+          { name: "Широкие отжимания", desc: "Локти уходят немного в стороны.", sets:"3", reps:"10", rest:"60 сек" },
+          { name: "Супермен", desc: "Уверенная пауза наверху.", sets:"3", reps:"12", hold:"5 сек", rest:"45 сек" },
+          { name: "Мёртвый жук", desc: "Медленно и точно.", sets:"3", reps:"10", rest:"45 сек" },
+          { name: "Планка на локтях", desc: "Дольше держим.", sets:"3", hold:"30 сек", rest:"45 сек" }
+        ]
+      },
+      {
+        label: "Нед. 9–12", kneeMin: 25, bodyMin: 28,
+        knee: [
+          { name: "Изометрия квадрицепса", desc: "Разминка — держать дольше.", sets:"4", reps:"15", hold:"15 сек", rest:"45 сек" },
+          { name: "Подъём прямой ноги (SLR)", desc: "Держать дольше.", sets:"4", reps:"15", hold:"8 сек", rest:"45 сек" },
+          { name: "Сжатие подушки", desc: "Максимальное усилие.", sets:"4", reps:"15", hold:"15 сек", rest:"45 сек" },
+          { name: "Ягодичный мост с паузой", desc: "Вверху держать 5 сек, опускать медленно 3 сек.", sets:"4", reps:"12", hold:"5 сек", rest:"60 сек" },
+          { name: "Отведение ноги лёжа", desc: "На боку, обе стороны.", sets:"3", reps:"15", hold:"5 сек", rest:"45 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Полные, без колен. Цель: уверенные 12.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Алмазные отжимания", desc: "Руки под грудью — большие и указательные пальцы образуют ромб. Акцент на трицепс.", sets:"3", reps:"8", rest:"60 сек" },
+          { name: "Супермен", desc: "Пауза 5 сек, опускать медленно.", sets:"4", reps:"12", hold:"5 сек", rest:"45 сек" },
+          { name: "Мёртвый жук", desc: "4 подхода.", sets:"4", reps:"10", rest:"45 сек" },
+          { name: "Планка на локтях", desc: "Дышать, не прогибаться.", sets:"3", hold:"35 сек", rest:"45 сек" }
+        ]
+      }
+    ]
+  },
+  {
+    id: 2, name: "УКРЕПЛЕНИЕ", weeks: "Нед. 13–24",
+    color: "var(--p2)", light: "var(--p2l)",
+    notice: "Добавляем упражнения стоя. Мини-присед только если нет боли в суставе.",
+    weekGroups: [
+      {
+        label: "Нед. 13–16", kneeMin: 25, bodyMin: 28,
+        knee: [
+          { name: "Изометрия квадрицепса (разминка)", desc: "Обязательная разминка перед остальными.", sets:"2", reps:"15", hold:"10 сек", rest:"30 сек" },
+          { name: "Ягодичный мост с паузой", desc: "Вверху 5 сек, опускать медленно 3 сек.", sets:"4", reps:"15", hold:"5 сек", rest:"60 сек" },
+          { name: "Терминальное разгибание", desc: "Стоя, нога слегка согнута. Медленно выпрямить до конца — задержать 2 сек — согнуть обратно. Обе ноги.", sets:"3", reps:"12", hold:"2 сек", rest:"45 сек" },
+          { name: "Мини-присед у стены (45°)", desc: "Спина прижата к стене, ноги на 30 см от стены. Сползти только до 45° — держать. Только если нет боли!", sets:"3", reps:"10", hold:"10 сек", rest:"60 сек" },
+          { name: "Подъём прямой ноги (SLR)", desc: "Медленно, обе ноги.", sets:"3", reps:"15", hold:"5 сек", rest:"45 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Нормальные. С колен только если совсем тяжело.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Широкие отжимания", desc: "Локти в стороны, акцент на грудь.", sets:"3", reps:"10", rest:"60 сек" },
+          { name: "Пайк-отжимания", desc: "Таз вверх (поза перевёрнутой V). Отжаться — голова идёт вниз между рук. Акцент на плечи.", sets:"3", reps:"8", rest:"60 сек" },
+          { name: "Супермен", desc: "Пауза 5 сек.", sets:"4", reps:"12", hold:"5 сек", rest:"45 сек" },
+          { name: "Мёртвый жук", desc: "Без отрыва поясницы.", sets:"4", reps:"10", rest:"45 сек" },
+          { name: "Планка на локтях", desc: "Хорошая форма.", sets:"3", hold:"40 сек", rest:"45 сек" }
+        ]
+      },
+      {
+        label: "Нед. 17–20", kneeMin: 28, bodyMin: 30,
+        knee: [
+          { name: "Изометрия квадрицепса (разминка)", desc: "Быстрая разминка.", sets:"2", reps:"15", hold:"10 сек", rest:"30 сек" },
+          { name: "Ягодичный мост с паузой", desc: "4 подхода уверенно.", sets:"4", reps:"15", hold:"5 сек", rest:"60 сек" },
+          { name: "Терминальное разгибание", desc: "Стоя, обе ноги поочерёдно.", sets:"4", reps:"15", hold:"2 сек", rest:"45 сек" },
+          { name: "Присед у стены (60°)", desc: "Теперь опускаемся глубже — до 60°. Только если нет боли.", sets:"3", reps:"12", hold:"10 сек", rest:"60 сек" },
+          { name: "SLR с лёгким грузом", desc: "Небольшой пакет (~0.5 кг) на голени. Поднять прямую ногу и держать.", sets:"3", reps:"12", hold:"5 сек", rest:"45 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Набираем объём.", sets:"4", reps:"14", rest:"60 сек" },
+          { name: "Пайк-отжимания", desc: "Таз вверх, голова вниз между рук.", sets:"3", reps:"10", rest:"60 сек" },
+          { name: "Алмазные отжимания", desc: "Руки ромбом под грудью. Трицепс.", sets:"3", reps:"10", rest:"60 сек" },
+          { name: "Супермен", desc: "Уверенная пауза.", sets:"4", reps:"15", hold:"5 сек", rest:"45 сек" },
+          { name: "Боковая планка", desc: "На одном локте, тело прямое боком. Обе стороны.", sets:"3", hold:"20 сек", rest:"45 сек" },
+          { name: "Мёртвый жук", desc: "Медленно и точно.", sets:"4", reps:"12", rest:"45 сек" }
+        ]
+      },
+      {
+        label: "Нед. 21–24", kneeMin: 30, bodyMin: 32,
+        knee: [
+          { name: "Изометрия квадрицепса (разминка)", desc: "Обязательная разминка.", sets:"2", reps:"15", hold:"10 сек", rest:"30 сек" },
+          { name: "Мёртвая тяга на одной ноге", desc: "Стоя на одной ноге, медленный наклон вперёд с прямой спиной, вторая нога уходит назад горизонтально. Обе ноги.", sets:"3", reps:"8", rest:"60 сек" },
+          { name: "Присед у стены (60°)", desc: "Держать дольше.", sets:"4", reps:"12", hold:"15 сек", rest:"60 сек" },
+          { name: "Ягодичный мост с паузой", desc: "Уверенно.", sets:"4", reps:"15", hold:"5 сек", rest:"60 сек" },
+          { name: "Баланс на одной ноге", desc: "Стоять на одной ноге — держать равновесие. Начинать с 20 сек, цель — 45 сек.", sets:"3", hold:"30 сек", rest:"30 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Чисто и уверенно.", sets:"4", reps:"15", rest:"60 сек" },
+          { name: "Пайк-отжимания", desc: "Глубже опускать голову.", sets:"4", reps:"10", rest:"60 сек" },
+          { name: "Алмазные отжимания", desc: "Трицепс.", sets:"4", reps:"10", rest:"60 сек" },
+          { name: "Полая доска (Hollow body)", desc: "Лёжа на спине, поясница прижата к полу, руки вперёд, ноги подняты и вытянуты вперёд почти горизонтально. Держать позицию.", sets:"3", hold:"15 сек", rest:"45 сек" },
+          { name: "Боковая планка", desc: "Обе стороны.", sets:"3", hold:"25 сек", rest:"45 сек" }
+        ]
+      }
+    ]
+  },
+  {
+    id: 3, name: "СТАБИЛИЗАЦИЯ", weeks: "Нед. 25–36",
+    color: "var(--p3)", light: "var(--p3l)",
+    notice: "Добавляем баланс и упражнения на одной ноге. Статический выпад — только если нет боли в суставе.",
+    weekGroups: [
+      {
+        label: "Нед. 25–28", kneeMin: 30, bodyMin: 32,
+        knee: [
+          { name: "Присед у стены (до 90°)", desc: "Если болит — вернись к 60°. Медленно опускаться и держать.", sets:"4", reps:"10", hold:"15 сек", rest:"60 сек" },
+          { name: "Мёртвая тяга на одной ноге", desc: "Уверенно, обе ноги. Можно держать лёгкий груз.", sets:"3", reps:"10", rest:"60 сек" },
+          { name: "Баланс на одной ноге", desc: "Стоять, не шататься. Руки можно держать перед собой.", sets:"3", hold:"40 сек", rest:"30 сек" },
+          { name: "Ягодичный мост на одной ноге", desc: "Одна нога поднята, поднимать таз на второй ноге. Держать 3 сек. Обе ноги.", sets:"3", reps:"10", hold:"3 сек", rest:"60 сек" },
+          { name: "Шаги в сторону в полуприседе", desc: "Ноги полусогнуты, 10 шагов вправо + 10 шагов влево = 1 серия. Медленно.", sets:"3", rest:"60 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Много и чисто.", sets:"4", reps:"16", rest:"60 сек" },
+          { name: "Отжимания с ногами на возвышении", desc: "Ноги на диване или стуле. Акцент на верхнюю грудь и плечи.", sets:"3", reps:"8", rest:"60 сек" },
+          { name: "Пайк-отжимания", desc: "Плечи.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Супермен", desc: "Уверенная пауза.", sets:"4", reps:"15", hold:"5 сек", rest:"45 сек" },
+          { name: "Полая доска", desc: "Держать дольше.", sets:"3", hold:"20 сек", rest:"45 сек" },
+          { name: "Планка на локтях", desc: "Долго и стабильно.", sets:"3", hold:"50 сек", rest:"45 сек" }
+        ]
+      },
+      {
+        label: "Нед. 29–32", kneeMin: 32, bodyMin: 33,
+        knee: [
+          { name: "Присед у стены (90°)", desc: "Уже должно быть уверенно.", sets:"4", reps:"12", hold:"15 сек", rest:"60 сек" },
+          { name: "Баланс на подушке", desc: "Встать на сложенное одеяло или подушку — балансировать на одной ноге. Сложнее!", sets:"3", hold:"30 сек", rest:"30 сек" },
+          { name: "Ягодичный мост на одной ноге", desc: "Дольше держим.", sets:"4", reps:"12", hold:"5 сек", rest:"60 сек" },
+          { name: "Мёртвая тяга на одной ноге", desc: "Увереннее и медленнее.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Шаги в сторону в полуприседе", desc: "4 серии.", sets:"4", rest:"60 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Полные, уверенные.", sets:"4", reps:"18", rest:"60 сек" },
+          { name: "Отжимания с ногами на возвышении", desc: "Нога на диване.", sets:"4", reps:"10", rest:"60 сек" },
+          { name: "Алмазные отжимания", desc: "Трицепс, чисто.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Полая доска", desc: "Уверенно держать.", sets:"4", hold:"25 сек", rest:"45 сек" },
+          { name: "Боковая планка", desc: "Обе стороны.", sets:"3", hold:"35 сек", rest:"45 сек" }
+        ]
+      },
+      {
+        label: "Нед. 33–36", kneeMin: 33, bodyMin: 35,
+        knee: [
+          { name: "Присед у стены (90°)", desc: "Полный угол, уверенно.", sets:"4", reps:"12", hold:"20 сек", rest:"60 сек" },
+          { name: "Статический выпад", desc: "Только без боли! Одна нога вперёд, вторая сзади опускается на колено. Держать — встать. Обе ноги.", sets:"3", reps:"8", hold:"5 сек", rest:"60 сек" },
+          { name: "Баланс на подушке", desc: "Цель: 45 сек на каждой ноге.", sets:"3", hold:"45 сек", rest:"30 сек" },
+          { name: "Ягодичный мост на одной ноге", desc: "4 подхода.", sets:"4", reps:"12", hold:"5 сек", rest:"60 сек" },
+          { name: "Мёртвая тяга на одной ноге", desc: "Можно с книгой в руке.", sets:"4", reps:"12", rest:"60 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Максимум чистых.", sets:"4", reps:"20", rest:"60 сек" },
+          { name: "Пайк-отжимания", desc: "Глубоко и медленно.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Отжимания с ногами на возвышении", desc: "Плечи нагружены хорошо.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Полая доска", desc: "Держать уверенно.", sets:"4", hold:"30 сек", rest:"45 сек" },
+          { name: "Мёртвый жук", desc: "Возвращаем — теперь сложнее.", sets:"3", reps:"12", rest:"45 сек" }
+        ]
+      }
+    ]
+  },
+  {
+    id: 4, name: "ПОДДЕРЖАНИЕ", weeks: "Нед. 37–52",
+    color: "var(--p4)", light: "var(--p4l)",
+    notice: "Поддерживающий режим. Эти упражнения остаются навсегда 3–4 раза в неделю для защиты суставов.",
+    weekGroups: [
+      {
+        label: "Нед. 37–44", kneeMin: 30, bodyMin: 35,
+        knee: [
+          { name: "Присед у стены (90°)", desc: "Поддерживающий режим.", sets:"4", reps:"12", hold:"15 сек", rest:"60 сек" },
+          { name: "Динамический выпад", desc: "Шаг вперёд — опуститься — шаг назад. Медленно, контроль колена.", sets:"4", reps:"10", rest:"60 сек" },
+          { name: "Ягодичный мост на одной ноге с грузом", desc: "Книга или груз на бедре.", sets:"4", reps:"12", hold:"3 сек", rest:"60 сек" },
+          { name: "Баланс на подушке", desc: "Нестабильная поверхность, стоять.", sets:"4", hold:"45 сек", rest:"30 сек" },
+          { name: "Мёртвая тяга на одной ноге", desc: "С небольшим грузом.", sets:"4", reps:"12", rest:"60 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Много и чисто.", sets:"4", reps:"20", rest:"60 сек" },
+          { name: "Алмазные отжимания", desc: "Трицепс.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Пайк-отжимания", desc: "Плечи.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Отжимания с ногами на возвышении", desc: "Ноги на диване.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Планка на локтях", desc: "Долго.", sets:"4", hold:"60 сек", rest:"45 сек" },
+          { name: "Полая доска", desc: "Уверенно.", sets:"4", hold:"35 сек", rest:"45 сек" }
+        ]
+      },
+      {
+        label: "Нед. 45–52", kneeMin: 30, bodyMin: 38,
+        knee: [
+          { name: "Присед у стены (90°)", desc: "Поддерживаем.", sets:"4", reps:"15", hold:"15 сек", rest:"60 сек" },
+          { name: "Динамический выпад", desc: "Уверенно, с контролем.", sets:"4", reps:"12", rest:"60 сек" },
+          { name: "Ягодичный мост на одной ноге", desc: "С грузом, дольше держим.", sets:"4", reps:"15", hold:"3 сек", rest:"60 сек" },
+          { name: "Баланс на подушке", desc: "Цель: 60 сек.", sets:"4", hold:"60 сек", rest:"30 сек" },
+          { name: "Мёртвая тяга на одной ноге", desc: "Стабильно и с весом.", sets:"4", reps:"15", rest:"60 сек" }
+        ],
+        body: [
+          { name: "Отжимания", desc: "Большой объём.", sets:"5", reps:"20", rest:"60 сек" },
+          { name: "Алмазные отжимания", desc: "Трицепс.", sets:"4", reps:"15", rest:"60 сек" },
+          { name: "Пайк-отжимания", desc: "Плечи.", sets:"4", reps:"15", rest:"60 сек" },
+          { name: "Отжимания с ногами на возвышении", desc: "Верх груди и плечи.", sets:"4", reps:"15", rest:"60 сек" },
+          { name: "Планка на локтях", desc: "Спокойно 60 сек.", sets:"4", hold:"60 сек", rest:"45 сек" },
+          { name: "Полая доска", desc: "Сильная форма.", sets:"4", hold:"40 сек", rest:"45 сек" }
+        ]
+      }
+    ]
+  }
+];
+
+// ===================== STATE =====================
+const DAYS = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+const TYPES = ["train+body","knee","train+body","knee","train+body","rest","rest"];
+
+let state = {
+  phase: 0,
+  weekGroup: 0,
+  day: new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+};
+
+// ===================== RENDER =====================
+function render() {
+  const app = document.getElementById('app');
+  const ph = PHASES[state.phase];
+  const wg = ph.weekGroups[state.weekGroup];
+  const dayType = TYPES[state.day];
+
+  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
+  let html = `
+  <div class="app-header">
+    <h1>МОЙ ПЛАН ТРЕНИРОВОК</h1>
+    <span class="today-pill">Сегодня: ${DAYS[todayIdx]}, ${new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}</span>
+  </div>
+
+  <div class="selectors">
+    <div class="sel-label">Фаза</div>
+    <div class="chip-row">
+      ${PHASES.map((p,i) => `<button class="chip ${i===state.phase?'active':''}" onclick="setPhase(${i})">${i+1} — ${p.name} <span style="font-weight:400;opacity:0.7;font-size:0.7rem">${p.weeks}</span></button>`).join('')}
+    </div>
+    <div class="sel-label">Неделя</div>
+    <div class="chip-row">
+      ${ph.weekGroups.map((wg,i) => `<button class="chip ${i===state.weekGroup?'active':''}" onclick="setWeek(${i})">${wg.label}</button>`).join('')}
+    </div>
+  </div>
+
+  <div class="day-tabs">
+    ${DAYS.map((d,i) => {
+      const t = TYPES[i];
+      const icon = t==='rest' ? '😴' : t==='knee' ? '🦵' : '💪';
+      return `<div class="day-tab ${i===state.day?'active':''} ${i===todayIdx&&i!==state.day?'today':''}" onclick="setDay(${i})">
+        <div class="dname">${d}</div>
+        <div class="dtype">${icon}</div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="content">
+  `;
+
+  if (dayType === 'rest') {
+    html += `
+    <div class="rest-day">
+      <div class="rest-icon">😴</div>
+      <h2>День отдыха</h2>
+      <p>Мышцы растут в покое. Сегодня ничего делать не нужно.<br><br>Можно немного походить — это только полезно.</p>
+    </div>`;
+  } else {
+    const isFullDay = dayType === 'train+body';
+    const total = wg.kneeMin + (isFullDay ? wg.bodyMin + 2 : 0);
+
+    html += `<div class="timing-bar">
+      <span class="time-badge total">⏱ Всего ~${total} мин</span>
+      <span class="time-badge knee">🦵 Колени ~${wg.kneeMin} мин</span>
+      ${isFullDay ? `<span class="time-badge body">💪 Тело ~${wg.bodyMin} мин</span><span class="time-badge str">🧘 Растяжка ~2 мин</span>` : ''}
+    </div>`;
+
+    html += `<div class="rules-box">
+      <strong>⚠ Правило одно</strong>
+      Боль <u>в суставе</u> = немедленно стоп. Мышечная усталость = нормально и хорошо.
+    </div>`;
+
+    // KNEE SECTION
+    html += renderSection("🦵 РЕАБИЛИТАЦИЯ КОЛЕНЕЙ", "knee", "Отдых между подходами: 45–60 сек", wg.knee, true);
+
+    if (isFullDay) {
+      html += renderSection("💪 ФУЛЛ-БОДИbreak ТРЕНИРОВКА", "body", "Отдых между подходами: 60 сек", wg.body, true);
+      html += renderStretch();
+    }
+  }
+
+  html += `</div>`;
+  app.innerHTML = html;
+}
+
+function renderSection(title, cls, restInfo, exercises, showNums) {
+  // Fix title
+  title = title.replace('break ', '\n');
+  let html = `<div class="section">
+    <div class="section-header ${cls}">
+      <span>${title.replace('\n','<br>')}</span>
+      <span class="rest-info">${restInfo}</span>
+    </div>
+    <div class="ex-list">`;
+
+  exercises.forEach((ex, i) => {
+    const tags = [];
+    if (ex.sets) tags.push(`${ex.sets} подх.`);
+    if (ex.reps) tags.push(`${ex.reps} повт.`);
+    if (ex.hold) tags.push(`держать ${ex.hold}`);
+    if (ex.rest) tags.push(`отдых ${ex.rest}`);
+
+    html += `<div class="ex-item">
+      ${showNums ? `<span class="ex-num">${i+1}</span>` : ''}
+      <div class="ex-info">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-desc">${ex.desc}</div>
+        <div class="ex-sets">${tags.map(t => `<span class="set-tag">${t}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  });
+
+  html += `</div></div>`;
+  return html;
+}
+
+function renderStretch() {
+  let html = `<div class="section">
+    <div class="section-header str">
+      <span>🧘 РАСТЯЖКА</span>
+      <span class="rest-info">~2 минуты · без боли</span>
+    </div>
+    <div class="ex-list">`;
+
+  STRETCH.forEach((ex, i) => {
+    html += `<div class="ex-item">
+      <span class="ex-num">${i+1}</span>
+      <div class="ex-info">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-desc">${ex.desc}</div>
+        <div class="ex-sets"><span class="set-tag">${ex.hold}</span></div>
+      </div>
+    </div>`;
+  });
+
+  html += `</div></div>`;
+  return html;
+}
+
+// ===================== ACTIONS =====================
+function setPhase(i) { state.phase = i; state.weekGroup = 0; render(); }
+function setWeek(i)  { state.weekGroup = i; render(); }
+function setDay(i)   { state.day = i; render(); }
+
+// ===================== INIT =====================
+render();
+</script>
+</body>
+</html>
